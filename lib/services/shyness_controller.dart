@@ -12,6 +12,7 @@ class ShynessController extends ChangeNotifier {
   bool isDemoMode = false;
   bool isPeeking = false;
   bool isMuted = false;
+  bool isCameraActive = true;
   String currentMessage = "Finally... some privacy 😌";
 
   final ShyStats stats = ShyStats();
@@ -28,6 +29,21 @@ class ShynessController extends ChangeNotifier {
 
   void stop() {
     _timer?.cancel();
+  }
+
+  void toggleCameraActive() {
+    isCameraActive = !isCameraActive;
+    if (!isCameraActive) {
+      FaceDetectorService.setManualOverride(0);
+      currentFaceCount = 0;
+      shynessScore = 0.0;
+      state = ShyState.calm;
+      _updateMessageAndSpeak("Camera detection stopped.");
+    } else {
+      FaceDetectorService.setManualOverride(-1);
+      _updateMessageAndSpeak("Camera active!");
+    }
+    notifyListeners();
   }
 
   void toggleMute() {
@@ -53,6 +69,15 @@ class ShynessController extends ChangeNotifier {
   }
 
   void _tick(double dt) {
+    if (!isCameraActive) {
+      currentFaceCount = 0;
+      shynessScore = 0.0;
+      stats.facesDetected = 0;
+      _updateState();
+      notifyListeners();
+      return;
+    }
+
     currentFaceCount = FaceDetectorService.detectFaces();
     stats.facesDetected = currentFaceCount;
 
@@ -125,7 +150,6 @@ class ShynessController extends ChangeNotifier {
     if (currentMessage != msg) {
       currentMessage = msg;
       if (!isMuted) {
-        // Strip emojis for voice engine readability
         String cleanSpeechText = msg.replaceAll(RegExp(r'[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}]', unicode: true), '').trim();
         FaceDetectorService.speak(cleanSpeechText);
       }

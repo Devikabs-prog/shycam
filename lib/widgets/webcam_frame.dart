@@ -11,6 +11,7 @@ class WebcamFrame extends StatelessWidget {
   final double shyness;
   final int faceCount;
   final bool isPeeking;
+  final bool isCameraActive;
 
   const WebcamFrame({
     super.key,
@@ -19,11 +20,11 @@ class WebcamFrame extends StatelessWidget {
     required this.shyness,
     required this.faceCount,
     required this.isPeeking,
+    required this.isCameraActive,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Web-safe flustered tint (avoids BackdropFilter video freezing bug)
     double blushTintOpacity = (shyness > 30) ? ((shyness - 30) / 70.0) * 0.35 : 0.0;
 
     Widget previewWidget;
@@ -46,10 +47,8 @@ class WebcamFrame extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Live Webcam Stream
           Positioned.fill(child: previewWidget),
 
-          // Flustered Pink Tint Overlay when Shy/Panicking
           if (blushTintOpacity > 0)
             Positioned.fill(
               child: AnimatedContainer(
@@ -58,14 +57,31 @@ class WebcamFrame extends StatelessWidget {
               ),
             ),
 
-          // Top Right Character Expression
+          // Camera Stopped Dark Overlay
+          if (!isCameraActive)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.65),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.videocam_off_rounded, color: Colors.white, size: 56),
+                    SizedBox(height: 12),
+                    Text(
+                      'CAMERA DETECTION STOPPED',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           Positioned(
             top: 16,
             right: 16,
             child: CameraCharacter(state: state, shyness: shyness),
           ),
 
-          // Bottom Left Face Counter Badge
           Positioned(
             bottom: 16,
             left: 16,
@@ -76,13 +92,12 @@ class WebcamFrame extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Faces Detected: $faceCount',
+                isCameraActive ? 'Faces Detected: $faceCount' : 'Status: STOPPED 🛑',
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ),
 
-          // Animated Hiding Curtain Overlay
           CurtainOverlay(
             isHidden: state == ShyState.extremePanic,
             isPeeking: isPeeking,
@@ -91,7 +106,6 @@ class WebcamFrame extends StatelessWidget {
       ),
     );
 
-    // Shake animation during Panic states
     if (state == ShyState.panic || state == ShyState.extremePanic) {
       return content.animate(onPlay: (c) => c.repeat()).shake(hz: 8, offset: const Offset(5, 0));
     } else if (state == ShyState.shy) {

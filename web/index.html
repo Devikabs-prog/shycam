@@ -22,7 +22,7 @@
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-    // Voice Engine Setup with Chrome Autoplay Fix
+    // Cute & Sweet Kids Voice Setup
     let voices = [];
     function loadVoices() {
       if ('speechSynthesis' in window) {
@@ -34,7 +34,6 @@
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
-    // Chrome Autoplay Policy Unblocker
     window.unlockAudioJS = function() {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.resume();
@@ -48,13 +47,26 @@
       try {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.pitch = 1.6;
-        utterance.rate = 1.15;
+        
+        // Super Cute Kid Voice Settings:
+        utterance.pitch = 2.0;  // Maximum pitch for adorable sweet kid voice!
+        utterance.rate = 1.05;  // Natural cute speed
         utterance.volume = 1.0;
 
+        // Pick the sweetest female / English voice available in Chrome
         if (voices.length > 0) {
-          const engVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
-          if (engVoice) utterance.voice = engVoice;
+          const sweetVoice = voices.find(v => 
+            v.lang.startsWith('en') && (
+              v.name.includes('Female') || 
+              v.name.includes('Zira') || 
+              v.name.includes('Samantha') || 
+              v.name.includes('Google') || 
+              v.name.includes('Karen') ||
+              v.name.includes('Natural')
+            )
+          ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+          
+          if (sweetVoice) utterance.voice = sweetVoice;
         }
 
         window.speechSynthesis.speak(utterance);
